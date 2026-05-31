@@ -444,9 +444,27 @@ function clearText() {
 
 function copyText() {
   if (!finalText.trim()) { alert('コピーする文章がありません'); return; }
-  const prefix = '以下の文章を要約してください。\n\n';
+  const prefix = `以下は会議の音声文字起こしです。以下の項目を必ず含めて要約してください。
+
+【開催日】
+【参加者】わかる範囲で
+
+【決定事項】
+・何が決まったか
+
+【タスク・依頼】
+・誰が・何を・いつまでに
+
+【次回の約束・期限】
+・日付や締め切りが出てきたものをすべて
+
+【その他の重要事項】
+・見落としてはいけないこと
+
+【会議内容】
+`;
   const textToCopy = prefix + finalText;
-  navigator.clipboard.writeText(textToCopy).then(() => alert('コピーしました！\n（先頭に「要約してください」が自動で追加されています）')).catch(() => prompt('コピーしてください：', textToCopy));
+  navigator.clipboard.writeText(textToCopy).then(() => alert('コピーしました！\n（議事録用のプロンプトが自動で追加されています）')).catch(() => prompt('コピーしてください：', textToCopy));
 }
 
 async function openSummary() {
