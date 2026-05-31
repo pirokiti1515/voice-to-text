@@ -223,6 +223,7 @@
   </button>
   <div class="sub-controls">
     <button class="btn-sub highlight" onclick="copyText()">📋 コピー</button>
+    <button class="btn-sub highlight" onclick="copyTextMeeting()">📋 議事録</button>
     <button class="btn-sub highlight" onclick="saveTranscript()" id="btnSaveTranscript">💾 保存</button>
     <button class="btn-sub" onclick="clearText()">🗑️ クリア</button>
     <button class="btn-sub highlight" onclick="openHistory()">📚 履歴</button>
@@ -268,6 +269,7 @@
     <div class="modal-body" id="historyDetailBody"></div>
     <div class="modal-footer">
       <button class="btn-print" onclick="copyHistoryDetail()">📋 コピー</button>
+      <button class="btn-print" onclick="copyHistoryDetailMeeting()">📋 議事録</button>
       <button class="btn-print" onclick="printHistoryDetail()">🖨️ 印刷する</button>
     </div>
   </div>
@@ -442,9 +444,7 @@ function clearText() {
   renderText('');
 }
 
-function copyText() {
-  if (!finalText.trim()) { alert('コピーする文章がありません'); return; }
-  const prefix = `以下は会議の音声文字起こしです。以下の項目を必ず含めて要約してください。
+const MEETING_PROMPT = `以下は会議の音声文字起こしです。以下の項目を必ず含めて要約してください。
 
 【決定事項】
 ・何が決まったか
@@ -472,8 +472,16 @@ function copyText() {
 
 【会議内容】
 `;
-  const textToCopy = prefix + finalText;
-  navigator.clipboard.writeText(textToCopy).then(() => alert('コピーしました！\n（議事録用のプロンプトが自動で追加されています）')).catch(() => prompt('コピーしてください：', textToCopy));
+
+function copyText() {
+  if (!finalText.trim()) { alert('コピーする文章がありません'); return; }
+  navigator.clipboard.writeText(finalText).then(() => alert('コピーしました！')).catch(() => prompt('コピーしてください：', finalText));
+}
+
+function copyTextMeeting() {
+  if (!finalText.trim()) { alert('コピーする文章がありません'); return; }
+  const textToCopy = MEETING_PROMPT + finalText;
+  navigator.clipboard.writeText(textToCopy).then(() => alert('議事録用にコピーしました！')).catch(() => prompt('コピーしてください：', textToCopy));
 }
 
 async function openSummary() {
@@ -728,6 +736,11 @@ function deleteHistory(id) {
 
 function copyHistoryDetail() {
   navigator.clipboard.writeText(currentSummaryText).then(() => alert('コピーしました！')).catch(() => prompt('コピーしてください：', currentSummaryText));
+}
+
+function copyHistoryDetailMeeting() {
+  const textToCopy = MEETING_PROMPT + currentSummaryText;
+  navigator.clipboard.writeText(textToCopy).then(() => alert('議事録用にコピーしました！')).catch(() => prompt('コピーしてください：', textToCopy));
 }
 
 function printHistoryDetail() {
