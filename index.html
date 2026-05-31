@@ -253,10 +253,7 @@
       <div class="history-title">📚 履歴</div>
       <button class="modal-close" onclick="closeHistory()">✕</button>
     </div>
-    <div style="display:flex;border-bottom:1px solid #1e1e2e;flex-shrink:0">
-      <button id="tabTranscript" onclick="switchTab('transcript')" style="flex:1;padding:12px;background:none;border:none;color:#00e5ff;font-family:'Noto Sans JP',sans-serif;font-size:14px;font-weight:700;border-bottom:2px solid #00e5ff;cursor:pointer">📝 文字起こし</button>
-      <button id="tabSummary" onclick="switchTab('summary')" style="flex:1;padding:12px;background:none;border:none;color:#5a5a7a;font-family:'Noto Sans JP',sans-serif;font-size:14px;cursor:pointer">✨ 要約</button>
-    </div>
+
     <div class="history-body" id="historyBody"></div>
   </div>
 </div>
@@ -581,26 +578,10 @@ function confirmSave() {
 
 let currentTab = 'transcript';
 
-function switchTab(tab) {
-  currentTab = tab;
-  const tBtn = document.getElementById('tabTranscript');
-  const sBtn = document.getElementById('tabSummary');
-  if (tab === 'transcript') {
-    tBtn.style.color = '#00e5ff'; tBtn.style.borderBottom = '2px solid #00e5ff'; tBtn.style.fontWeight = '700';
-    sBtn.style.color = '#5a5a7a'; sBtn.style.borderBottom = 'none'; sBtn.style.fontWeight = '400';
-  } else {
-    sBtn.style.color = '#00e5ff'; sBtn.style.borderBottom = '2px solid #00e5ff'; sBtn.style.fontWeight = '700';
-    tBtn.style.color = '#5a5a7a'; tBtn.style.borderBottom = 'none'; tBtn.style.fontWeight = '400';
-  }
-  renderHistoryList();
-}
-
 function renderHistoryList() {
-  const storageKey = currentTab === 'transcript' ? 'transcript_history' : 'summary_history';
+  const storageKey = 'transcript_history';
   const history = JSON.parse(localStorage.getItem(storageKey) || '[]');
-  const emptyMsg = currentTab === 'transcript'
-    ? 'まだ保存された文字起こしがありません。<br><br>文字起こし後に「💾 保存」を押すと<br>ここに記録されます。'
-    : 'まだ保存された要約がありません。<br><br>要約後に「💾 保存」を押すと<br>ここに記録されます。';
+  const emptyMsg = 'まだ保存された文字起こしがありません。<br><br>文字起こし後に「💾 保存」を押すと<br>ここに記録されます。';
 
   const body = document.getElementById('historyBody');
 
@@ -609,7 +590,7 @@ function renderHistoryList() {
     return;
   }
 
-  const openFn = currentTab === 'transcript' ? 'openTranscriptDetail' : 'openHistoryDetail';
+  const openFn = 'openTranscriptDetail';
 
   body.innerHTML = `
     <div class="history-toolbar">
@@ -689,7 +670,7 @@ function deleteTranscript(id) {
 
 function openHistory() {
   currentTab = 'transcript';
-  switchTab('transcript');
+  renderHistoryList();
   document.getElementById('historyOverlay').classList.add('open');
 }
 
