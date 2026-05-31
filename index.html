@@ -277,6 +277,17 @@
   </div>
 </div>
 
+<!-- APIキー入力モーダル -->
+<div class="api-modal-overlay" id="apiModalOverlay" style="position:fixed;inset:0;background:rgba(0,0,0,0.9);z-index:400;display:none;align-items:center;justify-content:center;padding:20px">
+  <div style="background:#13131a;border-radius:16px;border:1px solid #1e1e2e;width:100%;max-width:400px;padding:24px">
+    <h2 style="font-size:16px;color:#00e5ff;margin-bottom:8px">🔑 APIキーを設定</h2>
+    <p style="font-size:13px;color:#5a5a7a;margin-bottom:16px;line-height:1.6">要約機能を使うにはAnthropicのAPIキーが必要です。<br>一度入力すればこのブラウザに保存されます。</p>
+    <input type="password" id="apiKeyInput" placeholder="sk-ant-api03-..." autocomplete="off"
+      style="width:100%;background:#0a0a0f;border:1px solid #1e1e2e;border-radius:8px;padding:12px;color:#f0f0f5;font-size:13px;font-family:monospace;margin-bottom:16px">
+    <button onclick="saveApiKey()" style="width:100%;padding:14px;background:#00e5ff;color:#000;border:none;border-radius:10px;font-size:15px;font-weight:700;font-family:'Noto Sans JP',sans-serif;cursor:pointer">保存して要約する</button>
+  </div>
+</div>
+
 <!-- タイトル入力モーダル -->
 <div class="title-modal-overlay" id="titleModalOverlay">
   <div class="title-modal">
@@ -291,6 +302,17 @@
 </div>
 
 <script>
+function saveApiKey() {
+  const key = document.getElementById('apiKeyInput').value.trim();
+  if (!key || !key.startsWith('sk-')) {
+    alert('正しいAPIキーを入力してください（sk- から始まります）');
+    return;
+  }
+  localStorage.setItem('anthropic_api_key', key);
+  document.getElementById('apiModalOverlay').style.display = 'none';
+  openSummary();
+}
+
 function getApiKey() {
   return localStorage.getItem('anthropic_api_key') || '';
 }
@@ -298,7 +320,7 @@ function getApiKey() {
 // 初回起動時にAPIキー未設定なら入力を促す
 window.addEventListener('load', () => {
   if (!localStorage.getItem('anthropic_api_key')) {
-    document.getElementById('apiModalOverlay').classList.add('open');
+    document.getElementById('apiModalOverlay').style.display = 'flex';
   }
 });
 
@@ -433,6 +455,10 @@ function copyText() {
 
 async function openSummary() {
   if (!finalText.trim()) { alert('録音してから要約ボタンを押してください'); return; }
+  if (!getApiKey()) {
+    document.getElementById('apiModalOverlay').style.display = 'flex';
+    return;
+  }
 
   document.getElementById('modalBody').innerHTML = '<div class="loading-dots"><span></span><span></span><span></span></div><p style="text-align:center;color:var(--text-dim);font-size:13px;margin-top:8px">AIが要約しています…</p>';
   document.getElementById('modalOverlay').classList.add('open');
