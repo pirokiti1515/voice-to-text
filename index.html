@@ -224,7 +224,6 @@
   <div class="sub-controls">
     <button class="btn-sub highlight" onclick="copyText()">📋 コピー</button>
     <button class="btn-sub highlight" onclick="saveTranscript()" id="btnSaveTranscript">💾 保存</button>
-    <button class="btn-sub highlight" onclick="openSummary()">✨ 要約</button>
     <button class="btn-sub" onclick="clearText()">🗑️ クリア</button>
     <button class="btn-sub highlight" onclick="openHistory()">📚 履歴</button>
   </div>
@@ -450,7 +449,9 @@ function clearText() {
 
 function copyText() {
   if (!finalText.trim()) { alert('コピーする文章がありません'); return; }
-  navigator.clipboard.writeText(finalText).then(() => alert('コピーしました！')).catch(() => prompt('コピーしてください：', finalText));
+  const prefix = '以下の文章を要約してください。\n\n';
+  const textToCopy = prefix + finalText;
+  navigator.clipboard.writeText(textToCopy).then(() => alert('コピーしました！\n（先頭に「要約してください」が自動で追加されています）')).catch(() => prompt('コピーしてください：', textToCopy));
 }
 
 async function openSummary() {
