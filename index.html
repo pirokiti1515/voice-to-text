@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="ja">
 <head>
@@ -290,6 +291,10 @@
 </div>
 
 <script>
+function getApiKey() {
+  return localStorage.getItem('anthropic_api_key') || '';
+}
+
 // 初回起動時にAPIキー未設定なら入力を促す
 window.addEventListener('load', () => {
   if (!localStorage.getItem('anthropic_api_key')) {
