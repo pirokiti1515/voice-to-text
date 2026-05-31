@@ -315,9 +315,7 @@ function getApiKey() {
 
 // 初回起動時にAPIキー未設定なら入力を促す
 window.addEventListener('load', () => {
-  if (!localStorage.getItem('anthropic_api_key')) {
-    document.getElementById('apiModalOverlay').style.display = 'flex';
-  }
+  // APIキー入力画面は表示しない（要約機能削除のため）
 });
 
 const FONT_SIZES = [16, 20, 24, 30, 36, 44];
