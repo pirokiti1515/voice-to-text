@@ -686,11 +686,14 @@ function deleteAll(storageKey) {
   renderHistoryList();
 }
 
+let currentSummaryDate = '';
+
 function openTranscriptDetail(id) {
   const history = JSON.parse(localStorage.getItem('transcript_history') || '[]');
   const item = history.find(h => h.id === id);
   if (!item) return;
   currentSummaryText = item.text;
+  currentSummaryDate = item.date; // 保存日時を記録
   currentSummaryHTML = '<pre style="white-space:pre-wrap;font-family:inherit;font-size:15px;line-height:1.8">' + item.text + '</pre>';
   document.getElementById('historyDetailDate').textContent = '📅 ' + item.date;
   document.getElementById('historyDetailBody').innerHTML = currentSummaryHTML;
@@ -743,9 +746,17 @@ function copyHistoryDetail() {
 }
 
 function copyHistoryDetailMeeting() {
-  const now = new Date();
-  const weekdays = ['日', '月', '火', '水', '木', '金', '土'];
-  const dateStr = now.getFullYear() + '年' + (now.getMonth()+1) + '月' + now.getDate() + '日（' + weekdays[now.getDay()] + '）';
+  // 保存日時を使う（例：「2026年5月31日 10:16」→パースして曜日を追加）
+  let dateStr = currentSummaryDate;
+  try {
+    // "2026年5月31日 10:16" 形式をパース
+    const match = currentSummaryDate.match(/(\d+)年(\d+)月(\d+)日/);
+    if (match) {
+      const d = new Date(match[1], match[2]-1, match[3]);
+      const weekdays = ['日', '月', '火', '水', '木', '金', '土'];
+      dateStr = match[1] + '年' + match[2] + '月' + match[3] + '日（' + weekdays[d.getDay()] + '）';
+    }
+  } catch(e) {}
   const datePrompt = `この会議は${dateStr}に行われました。「今日」「明日」「来週」「今週中」などの相対的な表現は、この日付を基準に「○月○日（曜日）」の形式で具体的な日付に変換してください。\n\nマークダウン形式で出力してください。\n\n`;
   const textToCopy = datePrompt + MEETING_PROMPT + currentSummaryText;
   navigator.clipboard.writeText(textToCopy).then(() => alert('議事録用にコピーしました！')).catch(() => prompt('コピーしてください：', textToCopy));
