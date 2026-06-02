@@ -480,7 +480,11 @@ function copyText() {
 
 function copyTextMeeting() {
   if (!finalText.trim()) { alert('コピーする文章がありません'); return; }
-  const textToCopy = MEETING_PROMPT + finalText;
+  const now = new Date();
+  const weekdays = ['日', '月', '火', '水', '木', '金', '土'];
+  const dateStr = now.getFullYear() + '年' + (now.getMonth()+1) + '月' + now.getDate() + '日（' + weekdays[now.getDay()] + '）';
+  const datePrompt = `この会議は${dateStr}に行われました。「今日」「明日」「来週」「今週中」などの相対的な表現は、この日付を基準に「○月○日（曜日）」の形式で具体的な日付に変換してください。\n\nマークダウン形式で出力してください。\n\n`;
+  const textToCopy = datePrompt + MEETING_PROMPT + finalText;
   navigator.clipboard.writeText(textToCopy).then(() => alert('議事録用にコピーしました！')).catch(() => prompt('コピーしてください：', textToCopy));
 }
 
@@ -739,7 +743,11 @@ function copyHistoryDetail() {
 }
 
 function copyHistoryDetailMeeting() {
-  const textToCopy = MEETING_PROMPT + currentSummaryText;
+  const now = new Date();
+  const weekdays = ['日', '月', '火', '水', '木', '金', '土'];
+  const dateStr = now.getFullYear() + '年' + (now.getMonth()+1) + '月' + now.getDate() + '日（' + weekdays[now.getDay()] + '）';
+  const datePrompt = `この会議は${dateStr}に行われました。「今日」「明日」「来週」「今週中」などの相対的な表現は、この日付を基準に「○月○日（曜日）」の形式で具体的な日付に変換してください。\n\nマークダウン形式で出力してください。\n\n`;
+  const textToCopy = datePrompt + MEETING_PROMPT + currentSummaryText;
   navigator.clipboard.writeText(textToCopy).then(() => alert('議事録用にコピーしました！')).catch(() => prompt('コピーしてください：', textToCopy));
 }
 
