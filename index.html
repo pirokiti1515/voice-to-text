@@ -638,8 +638,8 @@ function renderHistoryList() {
     <div class="history-item" id="item-${item.id}">
       <input type="checkbox" id="chk-${item.id}" onclick="event.stopPropagation()" onchange="updateItemStyle(${item.id})">
       <div class="history-item-content" onclick="${openFn}(${item.id})">
-        <div class="history-item-date">📅 ${item.date}${item.title ? ' ／ <strong>' + item.title + '</strong>' : ''}</div>
-        <div class="history-item-preview">${item.text.substring(0,60).replace(/\n/g,' ')}…</div>
+        <div style="font-size:17px;font-weight:700;color:var(--text);line-height:1.5">${item.title || item.date}</div>
+        ${item.title ? '<div style="font-size:12px;color:var(--text-dim);margin-top:4px">📅 ' + item.date + '</div>' : ''}
       </div>
     </div>
   `).join('');
