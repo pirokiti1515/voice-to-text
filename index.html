@@ -1,3 +1,11 @@
+全体のコードですね！失礼いたしました。
+先ほどの「声文字」の日本語テキストを完全に消去し、ヘッダーに「AUDIO TRANSCRIPT」だけが美しく残るように調整した**修正版の全コード**です。
+
+これを丸ごとコピーして、現在お使いのファイルに上書き（ペースト）してください。
+
+### 📄 修正済みの全コード
+
+```html
 <!DOCTYPE html>
 <html lang="ja">
 <head>
@@ -59,10 +67,10 @@
   }
   .logo span { 
     color: var(--text-dim); 
-    font-size: 11px; 
-    margin-left: 8px; 
+    font-size: 12px; 
+    margin-left: 0; 
     font-weight: 400; 
-    letter-spacing: 0;
+    letter-spacing: 0.05em;
   }
   
   /* 動作中のみ存在感を放つ静かなインジケーター */
@@ -274,7 +282,7 @@
 
 <header>
   <div>
-    <div class="logo">声文字<span>AUDIO TRANSCRIPT</span></div>
+    <div class="logo"><span>AUDIO TRANSCRIPT</span></div>
   </div>
   <div style="display:flex;align-items:center;gap:16px">
     <div class="font-size-control">
@@ -388,7 +396,7 @@ function getApiKey() {
 
 const FONT_SIZES = [16, 20, 24, 30, 36, 44];
 const FONT_LABELS = ['極小','小','中','大','特大','最大'];
-let fontIndex = 2; // デフォルトを「中」に美しく調整
+let fontIndex = 2; 
 document.documentElement.style.setProperty('--font-size', FONT_SIZES[fontIndex] + 'px');
 document.getElementById('fontSizeLabel').textContent = FONT_LABELS[fontIndex];
 
@@ -825,3 +833,5 @@ function printSummary() {
 </script>
 </body>
 </html>
+
+```
