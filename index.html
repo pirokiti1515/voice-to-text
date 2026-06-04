@@ -401,6 +401,7 @@ function changeFontSize(delta) {
 let recognition = null;
 let isRecording = false;
 let finalText = '';
+let recordingStartTime = null;
 
 const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
 
@@ -424,6 +425,7 @@ function startRecording() {
 
   recognition.onstart = () => {
     isRecording = true;
+    if (!recordingStartTime) recordingStartTime = new Date();
     document.getElementById('btnRecord').classList.add('recording');
     document.getElementById('btnIcon').textContent = '■';
     document.getElementById('btnIcon').style.transform = 'none';
@@ -480,10 +482,7 @@ function stopRecording() {
   document.getElementById('btnIcon').style.marginLeft = '2px';
   document.getElementById('btnLabel').textContent = '録音開始';
   document.getElementById('statusDot').classList.remove('live');
-  // interim テキストだけ消す（スクロール位置はそのまま保持）
-  const area = document.getElementById('textArea');
-  const interim = area.querySelector('.interim');
-  if (interim) interim.remove();
+  renderText('');
 }
 
 function renderText(interim) {
@@ -512,6 +511,7 @@ function renderText(interim) {
 function clearText() {
   if (!confirm('テキストをクリアしますか？')) return;
   finalText = '';
+  recordingStartTime = null;
   renderText('');
 }
 
@@ -655,8 +655,9 @@ function confirmSave() {
   if (pendingSaveType === 'transcript') {
     const history = JSON.parse(localStorage.getItem('transcript_history') || '[]');
     const now = new Date();
-    const dateStr = now.getFullYear() + '年' + (now.getMonth()+1) + '月' + now.getDate() + '日 '
-      + now.getHours() + ':' + String(now.getMinutes()).padStart(2,'0');
+    const startDate = recordingStartTime || now;
+    const dateStr = startDate.getFullYear() + '年' + (startDate.getMonth()+1) + '月' + startDate.getDate() + '日 '
+      + startDate.getHours() + ':' + String(startDate.getMinutes()).padStart(2,'0');
     history.unshift({ date: dateStr, title: title, text: finalText, id: Date.now() });
     if (history.length > 200) history.pop();
     localStorage.setItem('transcript_history', JSON.stringify(history));
