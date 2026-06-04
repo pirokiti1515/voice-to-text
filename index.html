@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="ja">
 <head>
@@ -683,8 +684,6 @@ function confirmSave() {
   pendingSaveType = '';
 }
 
-let currentTab = 'transcript';
-
 function renderHistoryList() {
   const storageKey = 'transcript_history';
   const history = JSON.parse(localStorage.getItem(storageKey) || '[]');
@@ -721,16 +720,6 @@ function updateItemStyle(id) {
   item.classList.toggle('selected', chk.checked);
 }
 
-function toggleSelectAll(storageKey) {
-  const history = JSON.parse(localStorage.getItem(storageKey) || '[]');
-  const checkboxes = history.map(item => document.getElementById('chk-' + item.id)).filter(Boolean);
-  const allChecked = checkboxes.every(c => c.checked);
-  checkboxes.forEach(c => {
-    c.checked = !allChecked;
-    const item = document.getElementById('item-' + c.id.replace('chk-',''));
-    if (item) item.classList.toggle('selected', c.checked);
-  });
-}
 
 function deleteSelected(storageKey) {
   const history = JSON.parse(localStorage.getItem(storageKey) || '[]');
@@ -771,7 +760,6 @@ function openTranscriptDetail(id) {
 }
 
 function openHistory() {
-  currentTab = 'transcript';
   renderHistoryList();
   document.getElementById('historyOverlay').classList.add('open');
 }
