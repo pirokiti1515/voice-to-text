@@ -1,4 +1,5 @@
 
+
 <!DOCTYPE html>
 <html lang="ja">
 <head>
@@ -338,8 +339,9 @@
       <div class="modal-title" id="historyDetailDate"></div>
       <button class="modal-close" onclick="closeHistoryDetail()">✕</button>
     </div>
-    <div class="modal-body" id="historyDetailBody"></div>
+    <div class="modal-body" id="historyDetailBody" contenteditable="true" style="cursor:text" oninput="onHistoryDetailEdit()"></div>
     <div class="modal-footer">
+      <button class="btn-print" onclick="saveHistoryDetailEdit()" id="btnSaveHistoryEdit">💾 上書き保存</button>
       <button class="btn-print" onclick="copyHistoryDetail()">コピー</button>
       <button class="btn-print" onclick="copyHistoryDetailMeeting()">議事録用</button>
       <button class="btn-print" onclick="printHistoryDetail()">印刷</button>
@@ -427,6 +429,8 @@ function startRecording() {
   recognition.onstart = () => {
     isRecording = true;
     if (!recordingStartTime) recordingStartTime = new Date();
+    document.getElementById('textArea').contentEditable = 'false';
+    document.getElementById('textArea').style.cursor = 'default';
     document.getElementById('btnRecord').classList.add('recording');
     document.getElementById('btnIcon').textContent = '■';
     document.getElementById('btnIcon').style.transform = 'none';
@@ -484,6 +488,11 @@ function stopRecording() {
   document.getElementById('btnLabel').textContent = '録音開始';
   document.getElementById('statusDot').classList.remove('live');
   renderText('');
+  // 録音停止後はテキストエリアを編集可能に
+  const area = document.getElementById('textArea');
+  area.contentEditable = 'true';
+  area.style.cursor = 'text';
+  area.addEventListener('input', () => { finalText = area.innerText; });
 }
 
 function renderText(interim) {
@@ -747,10 +756,37 @@ function deleteAll(storageKey) {
 
 let currentSummaryDate = '';
 
+let currentHistoryId = null;
+
+function onHistoryDetailEdit() {
+  const btn = document.getElementById('btnSaveHistoryEdit');
+  btn.style.color = 'var(--text)';
+  btn.style.background = 'rgba(255,255,255,0.1)';
+}
+
+function saveHistoryDetailEdit() {
+  if (!currentHistoryId) return;
+  const body = document.getElementById('historyDetailBody');
+  const newText = body.innerText;
+  const history = JSON.parse(localStorage.getItem('transcript_history') || '[]');
+  const idx = history.findIndex(h => h.id === currentHistoryId);
+  if (idx !== -1) {
+    history[idx].text = newText;
+    localStorage.setItem('transcript_history', JSON.stringify(history));
+    currentSummaryText = newText;
+    const btn = document.getElementById('btnSaveHistoryEdit');
+    btn.textContent = '✅ 保存しました';
+    btn.style.color = '';
+    btn.style.background = '';
+    setTimeout(() => { btn.textContent = '💾 上書き保存'; }, 2000);
+  }
+}
+
 function openTranscriptDetail(id) {
   const history = JSON.parse(localStorage.getItem('transcript_history') || '[]');
   const item = history.find(h => h.id === id);
   if (!item) return;
+  currentHistoryId = id;
   currentSummaryText = item.text;
   currentSummaryDate = item.date;
   currentSummaryHTML = '<pre style="white-space:pre-wrap;font-family:inherit;font-size:15px;line-height:1.7;color:var(--text);">' + item.text + '</pre>';
