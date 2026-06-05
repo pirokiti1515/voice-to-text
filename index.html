@@ -434,7 +434,9 @@ function stopRecording() {
   document.getElementById('btnIcon').style.marginLeft = '2px';
   document.getElementById('btnLabel').textContent = '録音開始';
   document.getElementById('statusDot').classList.remove('live');
-  renderText('');
+  // interim要素だけ削除（DOM再構築を避けてスクロール位置を保持）
+  const interim = document.querySelector('.interim');
+  if (interim) interim.remove();
   // 録音停止後はテキストエリアを編集可能に
   const area = document.getElementById('textArea');
   area.contentEditable = 'true';
