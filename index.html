@@ -310,7 +310,12 @@
 <div class="history-detail-overlay" id="historyDetailOverlay">
   <div class="history-detail-modal">
     <div class="modal-header">
-      <div class="modal-title" id="historyDetailDate"></div>
+      <div class="modal-title" id="historyDetailDate"
+        contenteditable="true"
+        style="cursor:text; border-bottom: 1px solid transparent; padding-bottom:2px; min-width:40px; outline:none;"
+        onfocus="this.style.borderBottomColor='var(--border-bright)'"
+        onblur="this.style.borderBottomColor='transparent'; saveHistoryTitle()"
+      ></div>
       <button class="modal-close" onclick="closeHistoryDetail()">✕</button>
     </div>
     <div class="modal-body" id="historyDetailBody" contenteditable="true" style="cursor:text" oninput="onHistoryDetailEdit()"></div>
@@ -625,6 +630,18 @@ function onHistoryDetailEdit() {
   const btn = document.getElementById('btnSaveHistoryEdit');
   btn.style.color = 'var(--text)';
   btn.style.background = 'rgba(255,255,255,0.1)';
+}
+
+function saveHistoryTitle() {
+  if (!currentHistoryId) return;
+  const titleEl = document.getElementById('historyDetailDate');
+  const newTitle = titleEl.innerText.trim();
+  const history = JSON.parse(localStorage.getItem('transcript_history') || '[]');
+  const idx = history.findIndex(h => h.id === currentHistoryId);
+  if (idx !== -1) {
+    history[idx].title = newTitle;
+    localStorage.setItem('transcript_history', JSON.stringify(history));
+  }
 }
 
 function saveHistoryDetailEdit() {
