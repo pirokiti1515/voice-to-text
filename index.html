@@ -424,7 +424,11 @@ function startRecording() {
     renderText(interim);
   };
 
-  recognition.onerror = (e) => { if (e.error !== 'aborted') console.error(e.error); };
+  recognition.onerror = (e) => {
+    if (e.error === 'aborted') return;
+    console.error(e.error);
+    if (isRecording) setTimeout(() => recognition.start(), 200);
+  };
   recognition.onend = () => { if (isRecording) recognition.start(); };
   recognition.start();
 }
