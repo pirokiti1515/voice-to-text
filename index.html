@@ -358,8 +358,6 @@ let isRecording = false;
 let finalText = '';
 let recordingStartTime = null;
 let scrollInterval = null;
-let userScrolling = false;
-let userScrollTimer = null;
 let renderScheduled = false;
 let pendingInterim = '';
 
@@ -370,10 +368,8 @@ if (!SpeechRecognition) {
   document.getElementById('btnRecord').disabled = true;
 }
 
-function onUserScroll() {
-  userScrolling = true;
-  clearTimeout(userScrollTimer);
-  userScrollTimer = setTimeout(() => { userScrolling = false; }, 3000);
+function isNearBottom(area) {
+  return area.scrollHeight - area.scrollTop - area.clientHeight < 80;
 }
 
 function toggleRecording() {
@@ -398,11 +394,6 @@ function setupTextAreaDOM() {
 function startRecording() {
   const area = setupTextAreaDOM();
 
-  // スクロールリスナーは一度だけ登録（重複防止）
-  area.removeEventListener('wheel', onUserScroll);
-  area.removeEventListener('touchmove', onUserScroll);
-  area.addEventListener('wheel', onUserScroll);
-  area.addEventListener('touchmove', onUserScroll);
 
   recognition = new SpeechRecognition();
   recognition.lang = 'ja-JP';
@@ -422,7 +413,7 @@ function startRecording() {
     document.getElementById('statusDot').classList.add('live');
     if (!scrollInterval) {
       scrollInterval = setInterval(() => {
-        if (!userScrolling) area.scrollTop = area.scrollHeight;
+        if (isNearBottom(area)) area.scrollTop = area.scrollHeight;
       }, 200);
     }
   };
@@ -475,8 +466,6 @@ function stopRecording() {
   const area = document.getElementById('textArea');
   area.contentEditable = 'true';
   area.style.cursor = 'text';
-  area.removeEventListener('wheel', onUserScroll);
-  area.removeEventListener('touchmove', onUserScroll);
   area._inputHandler && area.removeEventListener('input', area._inputHandler);
   area._inputHandler = () => { finalText = area.innerText; };
   area.addEventListener('input', area._inputHandler);
