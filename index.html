@@ -343,7 +343,7 @@
 
 const FONT_SIZES = [16, 20, 24, 30, 36, 44];
 const FONT_LABELS = ['極小','小','中','大','特大','最大'];
-let fontIndex = 2; 
+let fontIndex = parseInt(localStorage.getItem('fontIndex') || '2');
 document.documentElement.style.setProperty('--font-size', FONT_SIZES[fontIndex] + 'px');
 document.getElementById('fontSizeLabel').textContent = FONT_LABELS[fontIndex];
 
@@ -351,6 +351,7 @@ function changeFontSize(delta) {
   fontIndex = Math.max(0, Math.min(FONT_SIZES.length - 1, fontIndex + delta));
   document.documentElement.style.setProperty('--font-size', FONT_SIZES[fontIndex] + 'px');
   document.getElementById('fontSizeLabel').textContent = FONT_LABELS[fontIndex];
+  localStorage.setItem('fontIndex', fontIndex);
 }
 
 let recognition = null;
@@ -445,7 +446,19 @@ function startRecording() {
     }
   };
 
-  recognition.onerror = (e) => { if (e.error !== 'aborted') console.error(e.error); };
+  recognition.onerror = (e) => {
+    if (e.error === 'not-allowed') {
+      stopRecording();
+      const area = document.getElementById('textArea');
+      area.innerHTML = '<div class="placeholder">⚠️ マイクの使用が許可されていません<br><br>ブラウザのアドレスバー横のアイコンから<br>マイクのアクセスを許可してください</div>';
+    } else if (e.error === 'network') {
+      stopRecording();
+      const area = document.getElementById('textArea');
+      area.innerHTML = '<div class="placeholder">⚠️ ネットワークエラーが発生しました<br><br>接続を確認してからもう一度お試しください</div>';
+    } else if (e.error !== 'aborted' && e.error !== 'no-speech') {
+      console.error(e.error);
+    }
+  };
   recognition.onend = () => { if (isRecording) recognition.start(); };
   recognition.start();
 }
@@ -594,15 +607,36 @@ function renderHistoryList() {
       <button class="btn-delete-selected" onclick="deleteSelected('${storageKey}')">選択削除</button>
       <button class="btn-delete-all" onclick="deleteAll('${storageKey}')">すべて削除</button>
     </div>
-  ` + history.map(item => `
-    <div class="history-item" id="item-${item.id}">
-      <input type="checkbox" id="chk-${item.id}" onclick="event.stopPropagation()" onchange="updateItemStyle(${item.id})">
-      <div class="history-item-content" onclick="${openFn}(${item.id})">
-        <div style="font-size:15px;font-weight:500;color:var(--text);line-height:1.4">${item.title || 'UNTITLED LOG'}</div>
-        <div class="history-item-date">${item.date}</div>
-      </div>
-    </div>
-  `).join('');
+  `;
+  history.forEach(item => {
+    const row = document.createElement('div');
+    row.className = 'history-item';
+    row.id = 'item-' + item.id;
+
+    const chk = document.createElement('input');
+    chk.type = 'checkbox';
+    chk.id = 'chk-' + item.id;
+    chk.onclick = (e) => e.stopPropagation();
+    chk.onchange = () => updateItemStyle(item.id);
+
+    const content = document.createElement('div');
+    content.className = 'history-item-content';
+    content.onclick = () => openTranscriptDetail(item.id);
+
+    const titleEl = document.createElement('div');
+    titleEl.style.cssText = 'font-size:15px;font-weight:500;color:var(--text);line-height:1.4';
+    titleEl.textContent = item.title || 'UNTITLED LOG';
+
+    const dateEl = document.createElement('div');
+    dateEl.className = 'history-item-date';
+    dateEl.textContent = item.date;
+
+    content.appendChild(titleEl);
+    content.appendChild(dateEl);
+    row.appendChild(chk);
+    row.appendChild(content);
+    body.appendChild(row);
+  });
 }
 
 function updateItemStyle(id) {
@@ -684,7 +718,12 @@ function openTranscriptDetail(id) {
   currentSummaryText = item.text;
   currentSummaryDate = item.date;
   document.getElementById('historyDetailDate').textContent = item.title ? item.title.toUpperCase() : 'ARCHIVE';
-  document.getElementById('historyDetailBody').innerHTML = '<pre style="white-space:pre-wrap;font-family:inherit;font-size:15px;line-height:1.7;color:var(--text);">' + item.text + '</pre>';
+  const pre = document.createElement('pre');
+  pre.style.cssText = 'white-space:pre-wrap;font-family:inherit;font-size:15px;line-height:1.7;color:var(--text);';
+  pre.textContent = item.text;
+  const detailBody = document.getElementById('historyDetailBody');
+  detailBody.innerHTML = '';
+  detailBody.appendChild(pre);
   document.getElementById('historyDetailOverlay').classList.add('open');
 }
 
