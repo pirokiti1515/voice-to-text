@@ -357,6 +357,11 @@ let recognition = null;
 let isRecording = false;
 let finalText = '';
 let recordingStartTime = null;
+let scrollInterval = null;
+let userScrolling = false;
+let userScrollTimer = null;
+let renderScheduled = false;
+let pendingInterim = '';
 
 const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
 
@@ -365,14 +370,40 @@ if (!SpeechRecognition) {
   document.getElementById('btnRecord').disabled = true;
 }
 
+function onUserScroll() {
+  userScrolling = true;
+  clearTimeout(userScrollTimer);
+  userScrollTimer = setTimeout(() => { userScrolling = false; }, 3000);
+}
+
 function toggleRecording() {
   if (!SpeechRecognition) return;
   isRecording ? stopRecording() : startRecording();
 }
 
-let scrollInterval = null;
+function setupTextAreaDOM() {
+  const area = document.getElementById('textArea');
+  area.innerHTML = '';
+  const fs = document.createElement('span');
+  fs.id = 'finalSpan';
+  fs.style.whiteSpace = 'pre-wrap';
+  area.appendChild(fs);
+  const is = document.createElement('span');
+  is.id = 'interimSpan';
+  is.className = 'interim';
+  area.appendChild(is);
+  return area;
+}
 
 function startRecording() {
+  const area = setupTextAreaDOM();
+
+  // スクロールリスナーは一度だけ登録（重複防止）
+  area.removeEventListener('wheel', onUserScroll);
+  area.removeEventListener('touchmove', onUserScroll);
+  area.addEventListener('wheel', onUserScroll);
+  area.addEventListener('touchmove', onUserScroll);
+
   recognition = new SpeechRecognition();
   recognition.lang = 'ja-JP';
   recognition.continuous = true;
@@ -381,33 +412,19 @@ function startRecording() {
   recognition.onstart = () => {
     isRecording = true;
     if (!recordingStartTime) recordingStartTime = new Date();
-    document.getElementById('textArea').contentEditable = 'false';
-    document.getElementById('textArea').style.cursor = 'default';
+    area.contentEditable = 'false';
+    area.style.cursor = 'default';
     document.getElementById('btnRecord').classList.add('recording');
     document.getElementById('btnIcon').textContent = '■';
     document.getElementById('btnIcon').style.transform = 'none';
     document.getElementById('btnIcon').style.marginLeft = '0';
     document.getElementById('btnLabel').textContent = '録音停止';
     document.getElementById('statusDot').classList.add('live');
-    const ph = document.getElementById('placeholder');
-    if (ph) ph.style.display = 'none';
-    const area = document.getElementById('textArea');
-    let userScrolling = false;
-    let userScrollTimer = null;
-    area.addEventListener('wheel', () => {
-      userScrolling = true;
-      clearTimeout(userScrollTimer);
-      userScrollTimer = setTimeout(() => { userScrolling = false; }, 3000);
-    });
-    area.addEventListener('touchmove', () => {
-      userScrolling = true;
-      clearTimeout(userScrollTimer);
-      userScrollTimer = setTimeout(() => { userScrolling = false; }, 3000);
-    });
-    scrollInterval = setInterval(() => {
-      if (userScrolling) return;
-      area.scrollTop = area.scrollHeight;
-    }, 200);
+    if (!scrollInterval) {
+      scrollInterval = setInterval(() => {
+        if (!userScrolling) area.scrollTop = area.scrollHeight;
+      }, 200);
+    }
   };
 
   recognition.onresult = (e) => {
@@ -417,11 +434,24 @@ function startRecording() {
         const t = e.results[i][0].transcript.trim();
         if (t) {
           finalText += t.replace(/。/g, '。\n').replace(/！/g, '！\n').replace(/？/g, '？\n') + '\n';
+          // 確定テキストは即反映
+          const fs = document.getElementById('finalSpan');
+          if (fs) fs.textContent = finalText;
         }
+      } else {
+        interim += e.results[i][0].transcript;
       }
-      else interim += e.results[i][0].transcript;
     }
-    renderText(interim);
+    // 暫定テキストは requestAnimationFrame でまとめて更新（連続発火を間引く）
+    pendingInterim = interim;
+    if (!renderScheduled) {
+      renderScheduled = true;
+      requestAnimationFrame(() => {
+        renderScheduled = false;
+        const is = document.getElementById('interimSpan');
+        if (is) is.textContent = pendingInterim;
+      });
+    }
   };
 
   recognition.onerror = (e) => { if (e.error !== 'aborted') console.error(e.error); };
@@ -439,43 +469,36 @@ function stopRecording() {
   document.getElementById('btnIcon').style.marginLeft = '2px';
   document.getElementById('btnLabel').textContent = '録音開始';
   document.getElementById('statusDot').classList.remove('live');
-  // interim要素だけ削除（DOM再構築を避けてスクロール位置を保持）
-  const interim = document.querySelector('.interim');
-  if (interim) interim.remove();
+  const is = document.getElementById('interimSpan');
+  if (is) is.textContent = '';
   // 録音停止後はテキストエリアを編集可能に
   const area = document.getElementById('textArea');
   area.contentEditable = 'true';
   area.style.cursor = 'text';
-  area.addEventListener('input', () => { finalText = area.innerText; });
+  area.removeEventListener('wheel', onUserScroll);
+  area.removeEventListener('touchmove', onUserScroll);
+  area._inputHandler && area.removeEventListener('input', area._inputHandler);
+  area._inputHandler = () => { finalText = area.innerText; };
+  area.addEventListener('input', area._inputHandler);
 }
 
 function renderText(interim) {
-  const area = document.getElementById('textArea');
-  area.innerHTML = '';
-  if (finalText) {
-    const s = document.createElement('span');
-    s.style.whiteSpace = 'pre-wrap';
-    s.textContent = finalText;
-    area.appendChild(s);
-  }
-  if (interim) {
-    const s = document.createElement('span');
-    s.className = 'interim';
-    s.textContent = interim;
-    area.appendChild(s);
-  }
-  if (!finalText && !interim) {
-    area.innerHTML = '<div class="placeholder" id="placeholder">READY TO RECORD<br><br>下のボタンを押して話しかけてください</div>';
-  }
-  if (isRecording) {
-    setTimeout(() => { area.scrollTop = area.scrollHeight; }, 50);
-  }
+  const fs = document.getElementById('finalSpan');
+  const is = document.getElementById('interimSpan');
+  if (fs) fs.textContent = finalText;
+  if (is) is.textContent = interim || '';
 }
 
 function clearText() {
   if (!confirm('テキストをクリアしますか？')) return;
   finalText = '';
   recordingStartTime = null;
+  pendingInterim = '';
+  if (!isRecording) {
+    const area = document.getElementById('textArea');
+    area.innerHTML = '<div class="placeholder" id="placeholder">READY TO RECORD<br><br>下のボタンを押して話しかけてください</div>';
+    return;
+  }
   renderText('');
 }
 
