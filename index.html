@@ -275,6 +275,7 @@
       <span id="fontSizeLabel">中</span>
       <button onclick="changeFontSize(1)">+</button>
     </div>
+    <span id="recordTimer" style="display:none; font-size:12px; color:var(--text-dim); font-family:'Space Mono',monospace; letter-spacing:0.05em;"></span>
     <div class="status-dot" id="statusDot"></div>
   </div>
 </header>
@@ -359,6 +360,7 @@ let isRecording = false;
 let finalText = '';
 let recordingStartTime = null;
 let scrollInterval = null;
+let timerInterval = null;
 let renderScheduled = false;
 let pendingInterim = '';
 
@@ -412,6 +414,17 @@ function startRecording() {
     document.getElementById('btnIcon').style.marginLeft = '0';
     document.getElementById('btnLabel').textContent = '録音停止';
     document.getElementById('statusDot').classList.add('live');
+    const timerEl = document.getElementById('recordTimer');
+    timerEl.style.display = 'inline';
+    const timerStart = Date.now() - (recordingStartTime ? Date.now() - recordingStartTime.getTime() : 0);
+    if (!timerInterval) {
+      timerInterval = setInterval(() => {
+        const elapsed = Math.floor((Date.now() - timerStart) / 1000);
+        const m = String(Math.floor(elapsed / 60)).padStart(2, '0');
+        const s = String(elapsed % 60).padStart(2, '0');
+        timerEl.textContent = m + ':' + s;
+      }, 1000);
+    }
     if (!scrollInterval) {
       scrollInterval = setInterval(() => {
         if (isNearBottom(area)) area.scrollTop = area.scrollHeight;
@@ -466,6 +479,10 @@ function startRecording() {
 function stopRecording() {
   isRecording = false;
   if (scrollInterval) { clearInterval(scrollInterval); scrollInterval = null; }
+  if (timerInterval) { clearInterval(timerInterval); timerInterval = null; }
+  const timerEl = document.getElementById('recordTimer');
+  timerEl.style.display = 'none';
+  timerEl.textContent = '';
   if (recognition) recognition.stop();
   document.getElementById('btnRecord').classList.remove('recording');
   document.getElementById('btnIcon').textContent = '▲';
